@@ -1,0 +1,4 @@
+amazon-textract-response-parser
+amazon-textract-prettyprinter
+amazon-textract-helper
+amazon-textract-textractor
