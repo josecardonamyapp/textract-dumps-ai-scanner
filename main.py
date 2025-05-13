@@ -10,7 +10,12 @@ from pretty_print_layout import TextractLayoutParser
 # radar-put-process-ocr
 s3 = boto3.client('s3')
 
-textract_client = boto3.client('textract')
+textract_client = boto3.client(
+    'textract',
+    region_name='us-east-1',
+    aws_access_key_id='',
+    aws_secret_access_key='',
+    )
 
 def textract_response_list(textract_json, name):
     blocks = textract_json['Blocks']
@@ -38,9 +43,11 @@ def textract_response_list(textract_json, name):
     return response 
 
 def lambda_handler(event, context):
-    document = event['Object']['Name']
+    document = event['document_path']
+    #type = event['type']
     textract_json_form = call_textract(
-        input_document= f"s3://ai-scanner-documents-repo-myapp /{document}",
+    #    input_document= f"s3://ai-scanner-documents-repo-myapp /{document}",
+        input_document= f"s3://test-sr-sa0093498/{document}",
        
         features=[
             Textract_Features.TABLES,
@@ -58,15 +65,16 @@ def lambda_handler(event, context):
     )
     
 
-    
+    print(parser)
     output = parser.get_text()
     json_output = json.dumps(output, indent=4, ensure_ascii=False)
     json_name = 'step1.json'
-    bucket_name = 'ai-scanner-documents-repo-myapp '
+    # bucket_name = 'ai-scanner-documents-repo-myapp'
+    bucket_name = 'test-sr-sa0093498'
     
-    carpeta = f"data_{uuid.uuid4()}"
+    document_dir = f"data_{uuid.uuid4()}"
     
-    s3.put_object(Body=json_output, Bucket = bucket_name, Key= carpeta+'/'+json_name)
+    # s3.put_object(Body=json_output, Bucket = bucket_name, Key= document_dir+'/'+json_name)
 
     response_response_list = textract_response_list(textract_json_form, document )
     
@@ -76,11 +84,17 @@ def lambda_handler(event, context):
             "data": json_name, 
             "name": document,
             "bucket": bucket_name,
-            "carpeta":carpeta
+            "dir":document_dir
         }),
          "response_list": response_response_list["response_list"],
-         "client": response_response_list["client"],
          "Name": response_response_list["Name"]
     }
+
+
+event = {
+    "document_path": "CNA License example 1.pdf"
+}
     
+test_result = lambda_handler(event, None)
+print(test_result)
     
